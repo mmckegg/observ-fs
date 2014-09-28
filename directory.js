@@ -32,12 +32,17 @@ function ObservDirectory(path, fs, cb){
 
 function startWatching(obs){
   var fs = obs.fs
-  fs.stat(obs.path, function(err, stats){
-    if (stats.isDirectory()){
-      obs.watcher = fs.watch(obs.path)
-      obs.watcher.on('change', obs.queueRefresh)
-    }
-  })
+  if (obs.watcher !== false){
+    obs.watcher = false
+    fs.stat(obs.path, function(err, stats){
+      if (stats && stats.isDirectory()){
+        obs.watcher = fs.watch(obs.path)
+        obs.watcher.on('change', obs.queueRefresh)
+      } else {
+        obs.watcher = null
+      }
+    })
+  }
 }
 
 
