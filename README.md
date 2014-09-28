@@ -43,7 +43,7 @@ Stop watching.
 var ObservFile = require('observ-fs/file')
 ```
 
-### `var file = ObservFile(path[, encoding="utf8", fs])`
+### `var file = ObservFile(path[, encoding="utf8", fs, cb])`
 
 Create a file observer. Unlike `ObservDirectory`, the path cannot be changed later but the file will be created if it doesn't exist.
 
@@ -51,7 +51,7 @@ Create a file observer. Unlike `ObservDirectory`, the path cannot be changed lat
 
 Any changes made to the file will be emitted.
 
-### `file.set(data)`
+### `file.set(data[, cb])`
 
 Update the file with `data` specified.
 

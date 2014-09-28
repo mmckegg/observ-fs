@@ -4,9 +4,12 @@ var nextTick = require('next-tick')
 
 module.exports = ObservFile
 
-function ObservFile(path, encoding, fs){
+function ObservFile(path, encoding, fs, cb){
 
-  if (encoding instanceof Object && !fs) return new ObservFile(path, null, encoding)
+  // handle optional args
+  if (typeof fs === 'function') return new ObservFile(path, encoding, null, encoding)
+  if (typeof encoding === 'function') return new ObservFile(path, null, null, encoding)
+  if (encoding instanceof Object && !fs) return new ObservFile(path, null, encoding, null)
 
   if (arguments.length == 2 && encoding instanceof Object){
     fs = encoding
@@ -30,35 +33,50 @@ function ObservFile(path, encoding, fs){
   obs.delay = 200
   obs.ttl = 100
   obs._refreshing = false
+  obs._init = false
+  obs._initCb = cb
 
   // initialize watch - and create file if doesn't exist on nextTick
   nextTick(function(){
-    fs.stat(obs.path, function(err, stats){
-      if (err){
-        // using '\n' for empty files because blank values are not allowed in level-filesystem :(
-        console.log(err, obs.path)
-        fs.writeFile(obs.path, '\n', function(err){
-          if (!err){
-            obs.watcher = fs.watch(obs.path)
-            obs.watcher.on('change', obs.queueRefresh)
-          } else {
-            throw err
-          }
-        })
-      } else {
-        if (stats.isFile()){
-          obs.watcher = fs.watch(obs.path)
-          obs.watcher.on('change', obs.queueRefresh)
-          obs.refresh()
-        } else {
-          throw new Error('unknown file type')
-        }
-      }
-    })
+    if (!obs._init){
+      init(obs)
+    }
   })
 
   initCache(path, obs)
   return obs
+}
+
+function init(obs){
+  var cb = obs._initCb
+  obs._initCb = null
+  obs._init = true
+
+  var fs = obs.fs
+  fs.stat(obs.path, function(err, stats){
+    if (err){
+      // using '\n' for empty files because blank values are not allowed in level-filesystem :(
+      fs.writeFile(obs.path, '\n', function(err){
+
+        if (!err){
+          obs.watcher = fs.watch(obs.path)
+          obs.watcher.on('change', obs.queueRefresh)
+        } else {
+          throw err
+        }
+
+        cb&&cb(null, obs)
+      })
+    } else {
+      if (stats.isFile()){
+        obs.watcher = fs.watch(obs.path)
+        obs.watcher.on('change', obs.queueRefresh)
+        obs.refresh(cb)
+      } else {
+        throw new Error('unknown file type')
+      }
+    }
+  })
 }
 
 function deleteFile(cb){
@@ -83,9 +101,11 @@ function refresh(cb){
   obs._refreshing = false
   clearTimeout(obs._refreshTimeout)
   readThruCache(obs.fs, obs.path, obs.encoding, obs.ttl, function(err, data){
+    if (err) return cb&&cb(err)
     if (obs() !== data){
       obs._obsSet(data)
     }
+    cb&&cb(null, obs)
   })
 }
 
@@ -97,7 +117,7 @@ function queueRefresh(){
   }
 }
 
-function set(data){
+function set(data, cb){
   var obs = this
   var fs = obs.fs
   var path = obs.path
@@ -105,8 +125,21 @@ function set(data){
   if (obs() !== data){
 
     updateCache(path, data)
+
+    if (!obs._init){
+      obs._init = 'pre'
+    }
+
     fs.writeFile(path, data, function(err){
+      if (err&&cb) return cb(err)
       if (err) throw err
+
+      // handle write before initialize
+      if (obs._init === 'pre'){
+        init(obs)
+      }
+
+      cb&&cb(null)
     })
 
     obs._obsSet(data)
@@ -121,6 +154,8 @@ function set(data){
       })
     }
 
+  } else {
+    cb&&cb(null)
   }
 }
 
@@ -161,6 +196,10 @@ function close(){
 var fileCache = {}
 function readThruCache(fs, path, encoding, ttl, cb){
   var cache = fileCache[path]
+  if (!cache){
+    return cb(null, null)
+  }
+
   if (cache.at && Date.now() < (cache.at + ttl)){
     cb(null, cache.data)
     return cache.data
