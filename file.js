@@ -27,7 +27,7 @@ function ObservFile(path, encoding, fs){
   obs.queueRefresh = queueRefresh.bind(obs)
   obs.delete = deleteFile.bind(obs)
   obs.close = close
-  obs.delay = 50
+  obs.delay = 200
   obs.ttl = 100
   obs._refreshing = false
 

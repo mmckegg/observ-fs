@@ -19,7 +19,7 @@ function ObservDirectory(path, fs, cb){
   obs.path = path
   obs.set = set
   obs.close = close
-  obs.delay = 100
+  obs.delay = 200
   obs._refreshing = false
 
   if (obs.path && obs.fs){

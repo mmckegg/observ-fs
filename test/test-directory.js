@@ -23,7 +23,7 @@ test(function(t){
 
   setTimeout(function(){
     fs.unlink(join(tmpdir, 'test-2'))
-  }, 400)
+  }, 600)
 
 
   setTimeout(function(){
