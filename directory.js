@@ -67,6 +67,8 @@ function set(path, fs, cb){
     }
     
     obs.refresh(cb)
+  } else {
+    cb&&cb(null, obs)
   }
 }
 
@@ -99,7 +101,7 @@ function refresh(cb){
       if (!files){
         obs._obsSet(null)
         obs.exists = false
-        cb&&cb(null, obs)
+        return cb&&cb(null, obs)
       }
 
       map(files, function(file, i, next){
