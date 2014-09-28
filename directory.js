@@ -3,6 +3,7 @@ var map = require('map-async')
 var join = require('path').join
 var getBaseName = require('path').basename
 var nodeFs = require('fs')
+var deepEqual = require('deep-equal')
 
 module.exports = ObservDirectory
 
@@ -116,7 +117,9 @@ function refresh(cb){
         })
       }, function(err, res){
         if (err) return cb&&cb(err)
-        obs._obsSet(res)
+        if (!deepEqual(obs(), res)){
+          obs._obsSet(res)
+        }
         cb&&cb(null, obs)
       })
     })
