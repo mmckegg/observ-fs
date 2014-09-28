@@ -9,7 +9,11 @@ Create observable file system scopes using [observ/unidirectional](http://github
 $ npm install observ-fs
 ```
 
-## `var ObservDirectory = require('observ-fs/directory')`
+## Directory API 
+
+```js
+var ObservDirectory = require('observ-fs/directory')
+```
 
 ### `var directory = ObservDirectory([path, fs, cb])`
 
@@ -33,7 +37,11 @@ Stop watching.
 
 ### `directory.exists` (getter)
 
-## `var ObservFile = require('observ-fs/file')`
+## File API 
+
+```js
+var ObservFile = require('observ-fs/file')
+```
 
 ### `var file = ObservFile(path[, encoding="utf8", fs])`
 
