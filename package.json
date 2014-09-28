@@ -1,0 +1,37 @@
+{
+  "name": "observ-fs",
+  "version": "0.0.0",
+  "description": "Create observable file system scopes using observ pattern.",
+  "main": "directory.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/mmckegg/observ-fs.git"
+  },
+  "keywords": [
+    "observ",
+    "fs",
+    "scope",
+    "file",
+    "directory",
+    "watch",
+    "unidirectional"
+  ],
+  "author": "Matt McKegg",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/mmckegg/observ-fs/issues"
+  },
+  "homepage": "https://github.com/mmckegg/observ-fs",
+  "dependencies": {
+    "map-async": "^0.1.1",
+    "next-tick": "^0.2.2",
+    "observ": "^0.2.0"
+  },
+  "devDependencies": {
+    "rimraf": "^2.2.8",
+    "tape": "^3.0.0"
+  }
+}
