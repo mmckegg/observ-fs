@@ -53,12 +53,12 @@ function set(path, fs, cb){
   var obs = this
   if (path !== obs.path || fs !== obs.fs){
     
-    obs.close()
     obs.path = path
     obs.fs = fs || obs.fs
 
-    if (obs.path && obs.fs){
-      startWatching(obs)
+    if (this.watcher){
+      this.watcher.close()
+      this.watcher = null
     }
     
     obs.refresh(cb)
@@ -70,6 +70,10 @@ function close(){
     this.watcher.close()
     this.watcher = null
   }
+
+  if (typeof this.onclose === 'function'){
+    this.onclose(this)
+  }
 }
 
 function refresh(cb){
@@ -79,6 +83,10 @@ function refresh(cb){
 
   obs._refreshing = false
   clearTimeout(obs._refreshTimeout)
+
+  if (!this.watcher && obs.path && obs.fs){
+    startWatching(obs)
+  }
 
   if (fs && rootPath){
     fs.readdir(rootPath, function(err, files){

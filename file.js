@@ -151,8 +151,10 @@ function close(){
     obs.fs = null
     obs.path = null
 
-  } else {
-    throw new Error('watcher already closed')
+  }
+
+  if (typeof obs.onclose === 'function'){
+    obs.onclose(this)
   }
 }
 
