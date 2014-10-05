@@ -35,6 +35,10 @@ Reload children and emit result (also calls `cb` with `directory` instance on lo
 
 Stop watching.
 
+### `var removeListener = directory.onClose(callback)`
+
+Get notified by `callback` when the directory is closed.
+
 ### `directory.exists` (getter)
 
 ## File API 
@@ -66,3 +70,7 @@ Delete the file stored on disk and close all other watchers.
 ### `file.close()`
 
 Close the watcher.
+
+### `var removeListener = file.onClose(callback)`
+
+Get notified by `callback` when the file is closed.

@@ -1,6 +1,7 @@
 var Observ = require('observ')
 var nodeFs = require('fs')
 var nextTick = require('next-tick')
+var Event = require('geval')
 
 module.exports = ObservFile
 
@@ -35,6 +36,10 @@ function ObservFile(path, encoding, fs, cb){
   obs._refreshing = false
   obs._init = false
   obs._initCb = cb
+
+  obs.onClose = Event(function(broadcast){
+    obs._onClose = broadcast
+  })
 
   // initialize watch - and create file if doesn't exist on nextTick
   nextTick(function(){
@@ -188,9 +193,7 @@ function close(){
 
   }
 
-  if (typeof obs.onclose === 'function'){
-    obs.onclose(this)
-  }
+  obs._onClose(obs)
 }
 
 var fileCache = {}

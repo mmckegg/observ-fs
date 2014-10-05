@@ -4,6 +4,7 @@ var join = require('path').join
 var getBaseName = require('path').basename
 var nodeFs = require('fs')
 var deepEqual = require('deep-equal')
+var Event = require('geval')
 
 module.exports = ObservDirectory
 
@@ -21,6 +22,10 @@ function ObservDirectory(path, fs, cb){
   obs.close = close
   obs.delay = 200
   obs._refreshing = false
+
+  obs.onClose = Event(function(broadcast){
+    obs._onClose = broadcast
+  })
 
   if (obs.path && obs.fs){
     startWatching(obs)
@@ -73,14 +78,14 @@ function set(path, fs, cb){
 }
 
 function close(){
-  if (this.watcher){
-    this.watcher.close()
-    this.watcher = null
+  var obs = this
+
+  if (obs.watcher){
+    obs.watcher.close()
+    obs.watcher = null
   }
 
-  if (typeof this.onclose === 'function'){
-    this.onclose(this)
-  }
+  obs._onClose(obs)
 }
 
 function refresh(cb){
