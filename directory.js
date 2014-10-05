@@ -109,6 +109,8 @@ function refresh(cb){
         return cb&&cb(null, obs)
       }
 
+      files = files.filter(checkFileName)
+
       map(files, function(file, i, next){
         var path = join(rootPath, file)
         fs.stat(path, function(err, stats){
@@ -148,4 +150,12 @@ function refresh(cb){
     obs.exists = false
     cb&&cb(null, obs)
   }
+}
+
+function checkFileName(name){
+  if (name.charAt(0) === '.'){
+    return false
+  }
+
+  return true
 }
