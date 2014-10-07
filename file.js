@@ -187,10 +187,6 @@ function close(){
     obs.watcher.close()
     obs.watcher = null
 
-    // destroy
-    obs.fs = null
-    obs.path = null
-
   }
 
   obs._onClose(obs)
