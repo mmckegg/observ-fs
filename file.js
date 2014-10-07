@@ -78,7 +78,7 @@ function init(obs){
         obs.watcher.on('change', obs.queueRefresh)
         obs.refresh(cb)
       } else {
-        throw new Error('unknown file type')
+        cb&&cb(null, obs)
       }
     }
   })
