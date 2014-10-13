@@ -228,7 +228,7 @@ function updateCache(path, data){
 
   while (cache.pending.length){
     var callback = cache.pending.pop()
-    callback(err, data)
+    callback(null, data)
   }
 }
 
