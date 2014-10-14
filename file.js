@@ -32,7 +32,7 @@ function ObservFile(path, encoding, fs, cb){
   obs.delete = deleteFile.bind(obs)
   obs.close = close
   obs.delay = 200
-  obs.ttl = 100
+  obs.ttl = 500
   obs._refreshing = false
   obs._init = false
   obs._initCb = cb
