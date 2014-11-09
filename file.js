@@ -36,6 +36,7 @@ function ObservFile(path, encoding, fs, cb){
   obs._refreshing = false
   obs._init = false
   obs._initCb = cb
+  obs._saving = false
 
   obs.onClose = Event(function(broadcast){
     obs._onClose = broadcast
@@ -135,19 +136,28 @@ function set(data, cb){
       obs._init = 'pre'
     }
 
-    fs.writeFile(path, data, function(err){
-      if (err&&cb) return cb(err)
-      if (err) throw err
-
-      // handle write before initialize
-      if (obs._init === 'pre'){
-        init(obs)
-      }
-
-      cb&&cb(null)
-    })
+    var id = Date.now()
 
     obs._obsSet(data)
+
+    if (!obs._saving){
+      obs._saving = true
+      nextTick(function(){
+        obs._saving = false
+        fs.writeFile(path, obs(), function(err){
+
+          if (err&&cb) return cb(err)
+          if (err) throw err
+
+          // handle write before initialize
+          if (obs._init === 'pre'){
+            init(obs)
+          }
+
+          cb&&cb(null)
+        })
+      })
+    }
 
     // immediately update all other open handlers (bypass watch)
     var cache = fileCache[path]
