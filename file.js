@@ -140,27 +140,34 @@ function set(data, cb){
 
     obs._obsSet(data)
 
+    var cache = fileCache[path]
+
     if (!obs._saving){
       obs._saving = true
       nextTick(function(){
-        obs._saving = false
-        fs.writeFile(path, obs(), function(err){
 
-          if (err&&cb) return cb(err)
-          if (err) throw err
+        if (cache && !cache.locked){
+          cache.locked = true
+          obs._saving = false
+          fs.writeFile(path, obs(), function(err){
 
-          // handle write before initialize
-          if (obs._init === 'pre'){
-            init(obs)
-          }
+            if (err&&cb) return cb(err)
+            if (err) throw err
 
-          cb&&cb(null)
-        })
+            // handle write before initialize
+            if (obs._init === 'pre'){
+              init(obs)
+            }
+
+            cache.locked = false
+            cb&&cb(null)
+          })
+        }
+
       })
     }
 
     // immediately update all other open handlers (bypass watch)
-    var cache = fileCache[path]
     if (cache){
       cache.openHandlers.forEach(function(handler){
         if (handler !== obs){

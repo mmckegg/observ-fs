@@ -11,6 +11,8 @@ fs.mkdirSync(tmpdir)
 test(function(t){
   var path = join(__dirname, 'tmp', 'test.txt')
   var observ1 = ObservFile(path, fs)
+  observ1.ttl = 100 // allow write hijack
+
   var observ2 = null
 
   var changes1 = []
@@ -26,6 +28,8 @@ test(function(t){
 
   setTimeout(function(){
     observ2 = ObservFile(path, fs)
+    observ2.ttl = 100 // allow write hijack
+
     t.equal(observ2(), 'initial value')
 
     observ2(function(value){
@@ -44,7 +48,7 @@ test(function(t){
 
   setTimeout(function(){
     observ1.delete()
-  }, 700)
+  }, 600)
 
   setTimeout(function(){
     t.deepEqual(changes1, [ 'initial value', 'new value', 'hijacked value', null ])
