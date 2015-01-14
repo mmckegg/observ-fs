@@ -36,7 +36,8 @@ function ObservFile(path, encoding, fs, cb){
   obs._refreshing = false
   obs._init = false
   obs._initCb = cb
-  obs._saving = false
+
+  obs._queue = []
 
   obs.onClose = Event(function(broadcast){
     obs._onClose = broadcast
@@ -125,7 +126,6 @@ function queueRefresh(){
 
 function set(data, cb){
   var obs = this
-  var fs = obs.fs
   var path = obs.path
 
   if (obs() !== data){
@@ -140,44 +140,63 @@ function set(data, cb){
 
     obs._obsSet(data)
 
-    var cache = fileCache[path]
-
-    if (!obs._saving){
-      obs._saving = true
-      nextTick(function(){
-
-        if (cache && !cache.locked){
-          cache.locked = true
-          obs._saving = false
-          fs.writeFile(path, obs(), function(err){
-
-            if (err&&cb) return cb(err)
-            if (err) throw err
-
-            // handle write before initialize
-            if (obs._init === 'pre'){
-              init(obs)
-            }
-
-            cache.locked = false
-            cb&&cb(null)
-          })
-        }
-
-      })
-    }
-
-    // immediately update all other open handlers (bypass watch)
-    if (cache){
-      cache.openHandlers.forEach(function(handler){
-        if (handler !== obs){
-          handler.refresh()
-        }
-      })
-    }
+    save(obs, cb)
 
   } else {
     cb&&cb(null)
+  }
+}
+
+function flushQueue(obs){
+  if (obs._queue.length){
+    var cbs = obs._queue.slice()
+    obs._queue.length = 0
+    save(obs, function(){
+      console.log('catch up', cbs.length)
+      cbs.forEach(function(cb){
+        typeof cb === 'function' && cb(null)
+      })
+    })
+  }
+}
+
+function save(obs, cb){
+  var fs = obs.fs
+  var path = obs.path
+  var cache = fileCache[path]
+
+  if (cache && !cache.locked){
+    cache.locked = true
+    nextTick(function(){
+
+      fs.writeFile(path, obs(), function(err){
+
+        cache.locked = false
+
+        if (err&&cb) return cb(err)
+        if (err) throw err
+
+        // handle write before initialize
+        if (obs._init === 'pre'){
+          init(obs)
+        }
+
+        cb&&cb(null)
+        cache.openHandlers.forEach(flushQueue)
+      })
+      
+    })
+  } else {
+    obs._queue.push(cb)
+  }
+
+  // immediately update all other open handlers (bypass watch)
+  if (cache){
+    cache.openHandlers.forEach(function(handler){
+      if (handler !== obs){
+        handler.refresh()
+      }
+    })
   }
 }
 
