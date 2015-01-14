@@ -152,7 +152,6 @@ function flushQueue(obs){
     var cbs = obs._queue.slice()
     obs._queue.length = 0
     save(obs, function(){
-      console.log('catch up', cbs.length)
       cbs.forEach(function(cb){
         typeof cb === 'function' && cb(null)
       })
