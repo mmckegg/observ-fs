@@ -1,6 +1,6 @@
 {
   "name": "observ-fs",
-  "version": "1.4.1",
+  "version": "1.4.2",
   "description": "Create observable file system scopes using observ pattern.",
   "main": "directory.js",
   "scripts": {
