@@ -2,6 +2,7 @@ var Observ = require('observ')
 var nodeFs = require('fs')
 var nextTick = require('next-tick')
 var Event = require('geval')
+var getDirectory = require('path').dirname
 
 module.exports = ObservFile
 
@@ -68,6 +69,8 @@ function init(obs){
         if (!err){
           obs.watcher = fs.watch(obs.path)
           obs.watcher.on('change', obs.queueRefresh)
+          obs.dirWatcher = fs.watch(getDirectory(obs.path))
+          obs.dirWatcher.on('change', obs.queueRefresh)
         } else {
           throw err
         }
@@ -78,6 +81,8 @@ function init(obs){
       if (stats.isFile()){
         obs.watcher = fs.watch(obs.path)
         obs.watcher.on('change', obs.queueRefresh)
+        obs.dirWatcher = fs.watch(getDirectory(obs.path))
+        obs.dirWatcher.on('change', obs.queueRefresh)
         obs.refresh(cb)
       } else {
         cb&&cb(null, obs)
@@ -105,8 +110,17 @@ function deleteFile(cb){
 
 function refresh(cb){
   var obs = this
+  var fs = obs.fs
+
   obs._refreshing = false
   clearTimeout(obs._refreshTimeout)
+
+  fs.stat(obs.path, function(err, stats){
+    if (err || !stats.isFile()){
+      obs.close()
+    }
+  })
+
   readThruCache(obs.fs, obs.path, obs.encoding, obs.ttl, function(err, data){
     if (err) return cb&&cb(err)
     if (obs() !== data){
@@ -217,11 +231,13 @@ function close(){
   }
 
   if (obs.watcher){
-
-    // close watcher
     obs.watcher.close()
     obs.watcher = null
+  }
 
+  if (obs.dirWatcher){
+    obs.dirWatcher.close()
+    obs.dirWatcher = null
   }
 
   obs._onClose(obs)
