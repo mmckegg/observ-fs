@@ -44,16 +44,16 @@ test(function(t){
 
   setTimeout(function(){
     fs.writeFile(path, 'hijacked value')
-  }, 400)
+  }, 550) //TODO: these delays shouldn't have to be so high 
 
   setTimeout(function(){
     observ1.delete()
-  }, 600)
+  }, 900)
 
   setTimeout(function(){
     t.deepEqual(changes1, [ 'initial value', 'new value', 'hijacked value', null ])
     t.deepEqual(changes2, [ 'new value', 'hijacked value', null ])
     t.end()
-  }, 800)
+  }, 1100)
 })
 

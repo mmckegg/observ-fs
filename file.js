@@ -30,6 +30,7 @@ function ObservFile(path, encoding, fs, cb){
   obs.encoding = encoding || 'utf8'
   obs.refresh = refresh.bind(obs)
   obs.queueRefresh = queueRefresh.bind(obs)
+  obs._handleDirectoryChange = handleDirectoryChange.bind(obs)
   obs.delete = deleteFile.bind(obs)
   obs.close = close
   obs.delay = 200
@@ -70,7 +71,7 @@ function init(obs){
           obs.watcher = fs.watch(obs.path)
           obs.watcher.on('change', obs.queueRefresh)
           obs.dirWatcher = fs.watch(getDirectory(obs.path))
-          obs.dirWatcher.on('change', obs.queueRefresh)
+          obs.dirWatcher.on('change', obs._handleDirectoryChange)
         } else {
           throw err
         }
@@ -82,7 +83,7 @@ function init(obs){
         obs.watcher = fs.watch(obs.path)
         obs.watcher.on('change', obs.queueRefresh)
         obs.dirWatcher = fs.watch(getDirectory(obs.path))
-        obs.dirWatcher.on('change', obs.queueRefresh)
+        obs.dirWatcher.on('change', obs._handleDirectoryChange)
         obs.refresh(cb)
       } else {
         cb&&cb(null, obs)
@@ -108,6 +109,14 @@ function deleteFile(cb){
   fs.unlink(path, cb)
 }
 
+function handleDirectoryChange(){
+  var obs = this
+  if (!obs._refreshing){
+    obs._refreshing = true
+    obs._refreshTimeout = setTimeout(obs.refresh, obs.delay)
+  }
+}
+
 function refresh(cb){
   var obs = this
   var fs = obs.fs
@@ -118,20 +127,24 @@ function refresh(cb){
   fs.stat(obs.path, function(err, stats){
     if (err || !stats.isFile()){
       obs.close()
+    } else if (!obs._checkMtime || obs._mtime !== stats.mtime.getTime()){
+      readThruCache(obs.fs, obs.path, obs.encoding, obs.ttl, function(err, data){
+        if (err) return cb&&cb(err)
+        if (obs() !== data){
+          obs._obsSet(data)
+        }
+        cb&&cb(null, obs)
+      })
+      obs._mtime = stats.mtime.getTime()
+      obs._checkMtime = true
+      cb&&cb(null, obs)
     }
-  })
-
-  readThruCache(obs.fs, obs.path, obs.encoding, obs.ttl, function(err, data){
-    if (err) return cb&&cb(err)
-    if (obs() !== data){
-      obs._obsSet(data)
-    }
-    cb&&cb(null, obs)
   })
 }
 
 function queueRefresh(){
   var obs = this
+  obs._checkMtime = false
   if (!obs._refreshing){
     obs._refreshing = true
     obs._refreshTimeout = setTimeout(obs.refresh, obs.delay)
