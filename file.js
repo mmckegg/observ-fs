@@ -3,6 +3,7 @@ var nodeFs = require('fs')
 var nextTick = require('next-tick')
 var Event = require('geval')
 var getDirectory = require('path').dirname
+var convertBuffer = require('buffer-to-uint8array')
 
 module.exports = ObservFile
 
@@ -272,7 +273,16 @@ function readThruCache(fs, path, encoding, ttl, cb){
  
   if (cache.pending.length && !cache.reading){
     cache.reading = true
-    fs.readFile(path, encoding, function(err, data){
+
+    var useEncoding = encoding === 'arraybuffer' ? 
+      null : encoding
+
+    fs.readFile(path, useEncoding, function(err, data){
+
+      if (encoding === 'arraybuffer') {
+        data = convertBuffer(data).buffer
+      }
+
       cache.data = data
       cache.reading = false
       cache.at = Date.now()

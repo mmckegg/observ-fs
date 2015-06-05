@@ -26,6 +26,7 @@
   },
   "homepage": "https://github.com/mmckegg/observ-fs",
   "dependencies": {
+    "buffer-to-uint8array": "^1.1.0",
     "deep-equal": "^0.2.1",
     "geval": "^2.1.1",
     "map-async": "^0.1.1",
