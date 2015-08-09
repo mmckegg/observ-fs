@@ -23,7 +23,10 @@ function ObservFile(path, encoding, fs, cb){
   var startValue = cache ? cache.data : null
 
   var obs = Observ(startValue)
-
+  obs.onClose = Event(function(broadcast){
+    obs._onClose = broadcast
+  })
+  
   obs._obsSet = obs.set
   obs.set = set
   obs.path = path
@@ -33,7 +36,7 @@ function ObservFile(path, encoding, fs, cb){
   obs.queueRefresh = queueRefresh.bind(obs)
   obs._handleDirectoryChange = handleDirectoryChange.bind(obs)
   obs.delete = deleteFile.bind(obs)
-  obs.close = close
+  obs.close = close.bind(obs)
   obs.delay = 200
   obs.ttl = 500
   obs._refreshing = false
@@ -42,9 +45,7 @@ function ObservFile(path, encoding, fs, cb){
 
   obs._queue = []
 
-  obs.onClose = Event(function(broadcast){
-    obs._onClose = broadcast
-  })
+
 
   // initialize watch - and create file if doesn't exist on nextTick
   nextTick(function(){
