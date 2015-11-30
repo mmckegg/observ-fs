@@ -26,7 +26,7 @@ function ObservFile(path, encoding, fs, cb){
   obs.onClose = Event(function(broadcast){
     obs._onClose = broadcast
   })
-  
+
   obs._obsSet = obs.set
   obs.set = set
   obs.path = path
@@ -212,7 +212,7 @@ function save(obs, cb){
         cb&&cb(null)
         cache.openHandlers.forEach(flushQueue)
       })
-      
+
     })
   } else {
     obs._queue.push(cb)
@@ -230,7 +230,7 @@ function save(obs, cb){
 
 function close(){
   var obs = this
-  
+
   // clean up cache
   var cache = fileCache[obs.path]
   if (cache){
@@ -271,17 +271,17 @@ function readThruCache(fs, path, encoding, ttl, cb){
   } else {
     cache.pending.push(cb)
   }
- 
+
   if (cache.pending.length && !cache.reading){
     cache.reading = true
 
-    var useEncoding = encoding === 'arraybuffer' ? 
+    var useEncoding = encoding === 'arraybuffer' ?
       null : encoding
 
     fs.readFile(path, useEncoding, function(err, data){
 
       if (encoding === 'arraybuffer') {
-        data = convertBuffer(data).buffer
+        data = data instanceof Uint8Array ? data.buffer : convertBuffer(data).buffer
       }
 
       cache.data = data
