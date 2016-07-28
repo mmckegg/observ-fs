@@ -40,7 +40,7 @@ function startWatching(obs){
   if (obs.watcher !== false){
     obs.watcher = false
     fs.stat(obs.path, function(err, stats){
-      if (stats && stats.isDirectory()){
+      if (stats && stats.isDirectory() && fs.watch){
         obs.watcher = fs.watch(obs.path)
         obs.watcher.on('change', obs.queueRefresh)
       } else {
@@ -62,7 +62,7 @@ function queueRefresh(){
 function set(path, fs, cb){
   var obs = this
   if (path !== obs.path || fs !== obs.fs){
-    
+
     obs.path = path
     obs.fs = fs || obs.fs
 
@@ -70,7 +70,7 @@ function set(path, fs, cb){
       this.watcher.close()
       this.watcher = null
     }
-    
+
     obs.refresh(cb)
   } else {
     cb&&cb(null, obs)

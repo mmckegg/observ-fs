@@ -64,45 +64,54 @@ function init(obs){
   obs._init = true
 
   var fs = obs.fs
-  fs.stat(obs.path, function(err, stats){
-    if (err){
+  fs.stat(obs.path, function (err, stats) {
+    if (err) {
       // using '\n' for empty files because blank values are not allowed in level-filesystem :(
-      fs.writeFile(obs.path, '\n', function(err){
-
-        if (!err){
-          obs.watcher = fs.watch(obs.path)
-          obs.watcher.on('change', obs.queueRefresh)
-          obs.dirWatcher = fs.watch(getDirectory(obs.path))
-          obs.dirWatcher.on('change', obs._handleDirectoryChange)
+      fs.writeFile(obs.path, '\n', function (err) {
+        if (!err) {
+          if (fs.watch) {
+            obs.watcher = fs.watch(obs.path)
+            obs.watcher.on('change', obs.queueRefresh)
+            obs.dirWatcher = fs.watch(getDirectory(obs.path))
+            obs.dirWatcher.on('change', obs._handleDirectoryChange)
+          }
         } else {
           throw err
         }
 
-        cb&&cb(null, obs)
+        cb && cb(null, obs)
       })
     } else {
-      if (stats.isFile()){
-        obs.watcher = fs.watch(obs.path)
-        obs.watcher.on('change', obs.queueRefresh)
-        obs.dirWatcher = fs.watch(getDirectory(obs.path))
-        obs.dirWatcher.on('change', obs._handleDirectoryChange)
+      if (stats.isFile()) {
+        if (fs.watch) {
+          try {
+            obs.watcher = fs.watch(obs.path) // this throws an error when the file isn't present!? (enoent)
+          } catch (ex) {
+            obs.watcher = null
+          }
+          if (obs.watcher) {
+            obs.watcher.on('change', obs.queueRefresh)
+            obs.dirWatcher = fs.watch(getDirectory(obs.path))
+            obs.dirWatcher.on('change', obs._handleDirectoryChange)
+          }
+        }
         obs.refresh(cb)
       } else {
-        cb&&cb(null, obs)
+        cb && cb(null, obs)
       }
     }
   })
 }
 
-function deleteFile(cb){
+function deleteFile (cb) {
   var obs = this
   var cache = fileCache[obs.path]
   var fs = obs.fs
   var path = obs.path
 
-  if (cache){
+  if (cache) {
     var handlers = cache.openHandlers.slice()
-    handlers.forEach(function(handler){
+    handlers.forEach(function (handler) {
       handler._obsSet(null)
       handler.close()
     })
@@ -111,9 +120,9 @@ function deleteFile(cb){
   fs.unlink(path, cb)
 }
 
-function handleDirectoryChange(){
+function handleDirectoryChange () {
   var obs = this
-  if (!obs._refreshing){
+  if (!obs._refreshing) {
     obs._refreshing = true
     obs._refreshTimeout = setTimeout(obs.refresh, obs.delay)
   }
