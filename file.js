@@ -228,16 +228,16 @@ function save(obs, cb){
   }
 
   // immediately update all other open handlers (bypass watch)
-  if (cache){
-    cache.openHandlers.forEach(function(handler){
-      if (handler !== obs){
-        handler.refresh()
+  if (cache) {
+    cache.openHandlers.forEach(function (handler) {
+      if (handler !== obs && handler() !== obs()) {
+        handler._obsSet(obs())
       }
     })
   }
 }
 
-function close(){
+function close () {
   var obs = this
 
   // clean up cache
@@ -305,12 +305,12 @@ function readThruCache(fs, path, encoding, ttl, cb){
   }
 }
 
-function updateCache(path, data){
+function updateCache (path, data) {
   var cache = fileCache[path]
   cache.data = data
   cache.at = Date.now()
 
-  while (cache.pending.length){
+  while (cache.pending.length) {
     var callback = cache.pending.pop()
     callback(null, data)
   }
